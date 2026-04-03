@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Calculator</string>
+    <string name="prefs">Preferences</string>
+    <string name="hist">History</string>
+    <string name="history_name">Calculation history</string>
+    <string name="history">Calculation history</string>
 </resources>
