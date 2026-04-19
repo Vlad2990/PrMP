@@ -1,20 +1,26 @@
 package com.example.app.ui.view
 
+import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.view.WindowManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.Spinner
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.DrawableCompat.applyTheme
 import androidx.core.view.ViewCompat
@@ -45,7 +51,6 @@ class MainActivity : AppCompatActivity() {
         ArrayAdapter(this, android.R.layout.simple_spinner_item, mutableListOf<String>())
     }
     override fun onCreate(savedInstanceState: Bundle?) {
-        val splashScreen = installSplashScreen()
         notificationHelper = NotificationHelper(this)
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -78,7 +83,11 @@ class MainActivity : AppCompatActivity() {
         val historyButton = findViewById<ImageButton>(R.id.hist)
 
         historyButton.setOnClickListener {
-            showHistoryBottomSheet()
+            if (viewModel.authorized) {
+                showHistoryBottomSheet()
+            } else {
+                authenticateForHistory()
+            }
         }
 
         textView.setOnLongClickListener {
@@ -91,6 +100,72 @@ class MainActivity : AppCompatActivity() {
 
         viewModel.loadTheme()
         viewModel.getHistory()
+        viewModel.pinVerificationResult.observe(this) { isValid ->
+            when (isValid) {
+                true -> {
+                    showHistoryBottomSheet()
+                    viewModel.resetPinVerification()
+                }
+                false -> {
+                    Toast.makeText(this, "Неверный код", Toast.LENGTH_SHORT).show()
+                    viewModel.resetPinVerification()
+                }
+                null -> {}
+            }
+        }
+    }
+    private fun showCustomPinDialog() {
+        val themedContext = androidx.appcompat.view.ContextThemeWrapper(
+            this,
+            com.google.android.material.R.style.Theme_MaterialComponents_DayNight_DarkActionBar
+        )
+
+        val dialogView = layoutInflater.inflate(R.layout.pin_dialog, null)
+        val input = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.customPinEditText)
+        val forgotPasswordBtn = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnForgotPassword)
+        val dialog = MaterialAlertDialogBuilder(themedContext)
+            .setTitle("Доступ по PIN-коду")
+            .setView(dialogView)
+            .setPositiveButton("Войти") { _, _ ->
+                val pin = input.text.toString()
+                viewModel.verifyPin(pin)
+                }
+            .setNegativeButton("Отмена", null)
+            .create()
+        forgotPasswordBtn.setOnClickListener {
+            dialog.dismiss()
+            handlePasswordReset()
+        }
+        dialog.show()
+    }
+    private fun handlePasswordReset() {
+        val intent = Intent(this@MainActivity, LoginActivity::class.java)
+        intent.putExtra("RESET_PIN", true)
+        startActivity(intent)
+    }
+    private fun authenticateForHistory() {
+        val executor = ContextCompat.getMainExecutor(this)
+        val biometricPrompt = BiometricPrompt(this, executor,
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    super.onAuthenticationSucceeded(result)
+                    viewModel.authorized = true
+                    showHistoryBottomSheet()
+                }
+
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    super.onAuthenticationError(errorCode, errString)
+                    showCustomPinDialog()
+                }
+            })
+
+        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+            .setTitle("Вход в историю")
+            .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
+            .setNegativeButtonText("Использовать PIN")
+            .build()
+
+        biometricPrompt.authenticate(promptInfo)
     }
     private fun showHistoryBottomSheet() {
         val bottomSheet = HistoryBottomSheet()
@@ -120,7 +195,7 @@ class MainActivity : AppCompatActivity() {
         val currentThemeId = viewModel.currentTheme.value?.id
         val checkedItem = themes.indexOfFirst { it.id == currentThemeId }.coerceAtLeast(0)
 
-        MaterialAlertDialogBuilder(this)
+        val dialog = MaterialAlertDialogBuilder(this, R.style.Theme_App)
             .setTitle("Выбор темы")
             .setSingleChoiceItems(names, checkedItem) { dialog, which ->
                 val selectedTheme = themes[which]
@@ -128,10 +203,18 @@ class MainActivity : AppCompatActivity() {
                 dialog.dismiss()
             }
             .show()
+        dialog.window?.let { window ->
+            val params = window.attributes
+
+            params.width = (resources.displayMetrics.widthPixels * 0.90).toInt()
+
+            params.height = WindowManager.LayoutParams.WRAP_CONTENT
+
+            window.attributes = params
+        }
     }
     private fun applyTheme(theme: AppTheme) {
         window.statusBarColor = theme.primaryColor
-
         val isLightStatusBar = ColorUtils.calculateLuminance(theme.primaryColor) > 0.5
         WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = isLightStatusBar
 

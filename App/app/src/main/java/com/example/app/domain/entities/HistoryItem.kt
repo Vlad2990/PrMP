@@ -11,8 +11,8 @@ import java.util.Locale
 
 @Serializable
 data class HistoryItem (
-    val expression: String,
-    val result: String,
+    val expression: String = "",
+    val result: String = "",
     val timestamp: Long = System.currentTimeMillis()
     ) {
     fun getFormattedDate(): String {

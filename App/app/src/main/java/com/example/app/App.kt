@@ -1,4 +1,4 @@
-package com.example.app // Ваш пакет
+package com.example.app
 
 import android.app.Application
 import com.example.app.di.appModule

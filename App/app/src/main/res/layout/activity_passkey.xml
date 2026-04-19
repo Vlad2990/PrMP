@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:gravity="center"
+    tools:context=".ui.view.PassKeyActivity">
+
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Придумайте Pass Key"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginBottom="40dp"/>
+
+    <LinearLayout
+        android:id="@+id/pinContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="32dp">
+
+        <include layout="@layout/item_pin_digit" android:id="@+id/pin1" />
+        <include layout="@layout/item_pin_digit" android:id="@+id/pin2" />
+        <include layout="@layout/item_pin_digit" android:id="@+id/pin3" />
+        <include layout="@layout/item_pin_digit" android:id="@+id/pin4" />
+        <include layout="@layout/item_pin_digit" android:id="@+id/pin5" />
+        <include layout="@layout/item_pin_digit" android:id="@+id/pin6" />
+    </LinearLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:alpha="0"
+        android:importantForAutofill="no">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etHiddenPin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberPassword"
+            android:maxLength="6"
+            android:importantForAutofill="no"
+            android:digits="0123456789"
+            android:textCursorDrawable="@null" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <TextView
+        android:id="@+id/tvError"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/red"
+        android:textSize="16sp"
+        android:visibility="invisible"
+        android:layout_marginTop="16dp"/>
+
+    <Button
+        android:id="@+id/btnNext"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="48dp"
+        android:text="Далее"
+        android:textSize="18sp"
+        style="@style/Widget.Material3.Button" />
+
+</LinearLayout>

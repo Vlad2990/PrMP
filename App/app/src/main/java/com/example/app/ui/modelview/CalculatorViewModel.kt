@@ -11,17 +11,18 @@ import com.example.app.domain.entities.AppThemes
 import com.example.app.domain.entities.ExpressionEvaluator
 import com.example.app.domain.entities.ExpressionFormatter
 import com.example.app.domain.entities.HistoryItem
-import com.example.app.domain.usecase.AddBracketsUseCase
-import com.example.app.domain.usecase.CalculateUseCase
-import com.example.app.domain.usecase.ClearOnShakeUseCase
-import com.example.app.domain.usecase.CopyToClipboardUseCase
-import com.example.app.domain.usecase.GetHistoryUseCase
-import com.example.app.domain.usecase.GetThemeUseCase
-import com.example.app.domain.usecase.SaveToHistoryUseCase
-import com.example.app.domain.usecase.SetThemeUseCase
-import com.example.app.domain.usecase.ToggleSignUseCase
-import com.example.app.domain.usecase.VibrateUseCase
-import com.example.app.domain.usecase.WriteOperatorUseCase
+import com.example.app.domain.usecase.auth.VerifyPassKeyUseCase
+import com.example.app.domain.usecase.calculator.AddBracketsUseCase
+import com.example.app.domain.usecase.calculator.CalculateUseCase
+import com.example.app.domain.usecase.systemapi.ClearOnShakeUseCase
+import com.example.app.domain.usecase.systemapi.CopyToClipboardUseCase
+import com.example.app.domain.usecase.firestore.GetHistoryUseCase
+import com.example.app.domain.usecase.firestore.GetThemeUseCase
+import com.example.app.domain.usecase.firestore.SaveToHistoryUseCase
+import com.example.app.domain.usecase.firestore.SetThemeUseCase
+import com.example.app.domain.usecase.calculator.ToggleSignUseCase
+import com.example.app.domain.usecase.systemapi.VibrateUseCase
+import com.example.app.domain.usecase.calculator.WriteOperatorUseCase
 import kotlinx.coroutines.launch
 
 class CalculatorViewModel(
@@ -35,7 +36,8 @@ class CalculatorViewModel(
     private val getThemeUseCase: GetThemeUseCase,
     private val setThemeUseCase: SetThemeUseCase,
     private val getHistoryUseCase: GetHistoryUseCase,
-    private val saveToHistoryUseCase: SaveToHistoryUseCase
+    private val saveToHistoryUseCase: SaveToHistoryUseCase,
+    private val verifyPassKeyUseCase: VerifyPassKeyUseCase
 ) : ViewModel() {
     private val _expression = MutableLiveData("")
     val expression: LiveData<String> get() = _expression
@@ -44,6 +46,9 @@ class CalculatorViewModel(
     private val operators = setOf("+", "-", "*", "/", "^")
     private val _history = MutableLiveData<List<HistoryItem>>()
     val history: LiveData<List<HistoryItem>> = _history
+    var authorized = false
+    private val _pinVerificationResult = MutableLiveData<Boolean?>(null)
+    val pinVerificationResult: LiveData<Boolean?> = _pinVerificationResult
     fun onKeyPressed(key: String) {
         vibrateUseCase()
         if (!_expression.value.isNullOrEmpty() &&
@@ -120,10 +125,21 @@ class CalculatorViewModel(
             getHistory()
         }
     }
-
     fun getHistory() {
         viewModelScope.launch {
             _history.value = getHistoryUseCase()
         }
+    }
+
+    fun verifyPin(pin: String) {
+        viewModelScope.launch {
+            val isValid = verifyPassKeyUseCase(pin)
+            authorized = isValid
+            _pinVerificationResult.value = isValid
+        }
+    }
+
+    fun resetPinVerification() {
+        _pinVerificationResult.value = null
     }
 }

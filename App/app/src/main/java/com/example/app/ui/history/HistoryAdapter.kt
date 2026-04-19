@@ -10,11 +10,11 @@ import com.example.app.domain.entities.HistoryItem
 
 class HistoryAdapter(
     private val items: List<HistoryItem>,
-    private val onItemClick: (HistoryItem) -> Unit // Добавляем колбэк
+    private val onItemClick: (HistoryItem) -> Unit
 ) : RecyclerView.Adapter<HistoryAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val root: View = view // Корневой контейнер элемента
+        val root: View = view
         val expression: TextView = view.findViewById(R.id.tvExpression)
         val result: TextView = view.findViewById(R.id.tvResult)
     }
@@ -29,7 +29,6 @@ class HistoryAdapter(
         holder.expression.text = item.expression
         holder.result.text = "= ${item.result}"
 
-        // Навешиваем слушатель на весь элемент
         holder.root.setOnClickListener {
             onItemClick(item)
         }

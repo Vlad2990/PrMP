@@ -34,7 +34,6 @@ class NotificationHelper(private val context: Context) {
     }
 
     fun showReturnNotification() {
-        // Intent, который откроет/вернёт главное окно приложения
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
